@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "973888415045",
+    "firebase_url": "https://maybe-dice2.firebaseio.com",
+    "project_id": "maybe-dice2",
+    "storage_bucket": "maybe-dice2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:973888415045:android:e7c133c5ec990cde5e8a2c",
+        "android_client_info": {
+          "package_name": "idiotlabs.maybe_dice2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "973888415045-2jgtkdravres3uvseidrk68vi6tq6g4r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAHwkiF-WYCPzErtFwJ75Zaya3NgFI7LE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "973888415045-2jgtkdravres3uvseidrk68vi6tq6g4r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
