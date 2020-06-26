@@ -6,6 +6,7 @@ import 'package:firebase_analytics/observer.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:positioned_tap_detector/positioned_tap_detector.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   Crashlytics.instance.enableInDevMode = true;
@@ -75,6 +76,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     },
   );
 
+  InterstitialAd myInterstitial = InterstitialAd(
+    // Replace the testAdUnitId with an ad unit id from the AdMob dash.
+    // https://developers.google.com/admob/android/test-ads
+    // https://developers.google.com/admob/ios/test-ads
+    adUnitId: 'ca-app-pub-8206166796422159/7840777752',
+    listener: (MobileAdEvent event) {
+      print("InterstitialAd event is $event");
+    },
+  );
+
   @override
   void initState() {
     super.initState();
@@ -82,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     dice1AnimationController = AnimationController(duration: const Duration(milliseconds: 500), vsync: this);
     dice2AnimationController = AnimationController(duration: const Duration(milliseconds: 500), vsync: this);
 
-    FirebaseAdMob.instance.initialize(appId: FirebaseAdMob.testAppId);
+    FirebaseAdMob.instance.initialize(appId: 'ca-app-pub-8206166796422159~9735092165');
 
     myBanner
     // typically this happens well before the ad is shown
@@ -95,6 +106,20 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         // Banner Position
         anchorType: AnchorType.bottom,
       );
+
+    RewardedVideoAd.instance.listener = (RewardedVideoAdEvent event, {String rewardType, int rewardAmount}) {
+      print("RewardedVideoAd event $event");
+      if (event == RewardedVideoAdEvent.rewarded) {
+        setState(() {
+
+        });
+      }
+      else if (event == RewardedVideoAdEvent.closed) {
+        RewardedVideoAd.instance
+            .load(adUnitId: 'ca-app-pub-8206166796422159/8379833800')
+            .catchError((e) => print("error in loading again"));
+      }
+    };
   }
 
   @override
@@ -103,7 +128,54 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      drawer: Drawer(),
+      drawer: Drawer(
+        child: Column(
+          children: <Widget>[
+            UserAccountsDrawerHeader(
+                accountName: new Text("Created by idiotLabs"),
+                accountEmail: null,
+            ),
+            ListTile(
+              title: Text("광고 봐주기"),
+              onTap: () {
+                myInterstitial
+                  ..load()
+                  ..show(
+                    anchorType: AnchorType.bottom,
+                    anchorOffset: 0.0,
+                    horizontalCenterOffset: 0.0,
+                  );
+              },
+            ),
+            ListTile(
+              title: Text("광고 봐주기 (video)"),
+              onTap: () {
+                RewardedVideoAd.instance
+                    .load(adUnitId: 'ca-app-pub-8206166796422159/8379833800')
+                    .catchError((e) => print("error in loading 1st time"));
+
+                RewardedVideoAd.instance
+                    .show()
+                    .catchError((e) {
+                      print("error in showing ad: ${e.toString()}");
+                      _showDialog();
+                    });
+              },
+            ),
+            ListTile(
+              title: Text("건의하기 (google form)"),
+              onTap: () async {
+                const url = 'https://forms.gle/2TyztqwYqEscbEkT8';
+                if (await canLaunch(url)) {
+                  await launch(url);
+                } else {
+                  throw 'Could not launch $url';
+                }
+              },
+            ),
+          ],
+        ),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -185,6 +257,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     dice1AnimationController.dispose();
     dice2AnimationController.dispose();
 
+    myBanner.dispose();
+
     super.dispose();
   }
 
@@ -220,4 +294,25 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
     setMessage('logEvent succeeded');
   }
+
+  void _showDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog(
+          content: new Text("아직은 때가 아닌가봐요 :')\n눌러주셔서 감사합니다."),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("Close"),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 }
