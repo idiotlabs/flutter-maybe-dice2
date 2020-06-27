@@ -5,6 +5,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:positioned_tap_detector/positioned_tap_detector.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -65,6 +66,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   final FirebaseAnalytics analytics;
   String _message = '';
 
+  static const MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo(
+    keywords: <String>['dice', 'entertainment', 'game'],
+    childDirected: false,
+    nonPersonalizedAds: true,
+  );
+
   BannerAd myBanner = BannerAd(
     // Replace the testAdUnitId with an ad unit id from the AdMob dash.
     // https://developers.google.com/admob/android/test-ads
@@ -89,6 +96,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    print("initState()");
 
     dice1AnimationController = AnimationController(duration: const Duration(milliseconds: 500), vsync: this);
     dice2AnimationController = AnimationController(duration: const Duration(milliseconds: 500), vsync: this);
@@ -109,14 +117,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     RewardedVideoAd.instance.listener = (RewardedVideoAdEvent event, {String rewardType, int rewardAmount}) {
       print("RewardedVideoAd event $event");
-      if (event == RewardedVideoAdEvent.rewarded) {
+      if (event == RewardedVideoAdEvent.loaded) {
+        setState(() {
+
+        });
+      }
+      else if (event == RewardedVideoAdEvent.rewarded) {
         setState(() {
 
         });
       }
       else if (event == RewardedVideoAdEvent.closed) {
         RewardedVideoAd.instance
-            .load(adUnitId: 'ca-app-pub-8206166796422159/8379833800')
+            .load(adUnitId: 'ca-app-pub-8206166796422159/8379833800', targetingInfo: targetingInfo)
             .catchError((e) => print("error in loading again"));
       }
     };
@@ -138,6 +151,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ListTile(
               title: Text("광고 봐주기"),
               onTap: () {
+                _logEvent('viewAdInterstitial');
+
                 myInterstitial
                   ..load()
                   ..show(
@@ -149,12 +164,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ),
             ListTile(
               title: Text("광고 봐주기 (video)"),
-              onTap: () {
-                RewardedVideoAd.instance
-                    .load(adUnitId: 'ca-app-pub-8206166796422159/8379833800')
-                    .catchError((e) => print("error in loading 1st time"));
+              onTap: () async {
+                _logEvent('viewAdReward');
 
-                RewardedVideoAd.instance
+                await RewardedVideoAd.instance
+                    .load(adUnitId: 'ca-app-pub-8206166796422159/8379833800', targetingInfo: targetingInfo)
+                    .catchError((e) => print("error in loading 1st time: ${e.toString()}"));
+
+                await RewardedVideoAd.instance
                     .show()
                     .catchError((e) {
                       print("error in showing ad: ${e.toString()}");
@@ -165,6 +182,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ListTile(
               title: Text("건의하기 (google form)"),
               onTap: () async {
+                _logEvent('clickSupport');
+
                 const url = 'https://forms.gle/2TyztqwYqEscbEkT8';
                 if (await canLaunch(url)) {
                   await launch(url);
@@ -269,7 +288,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   void _onLongPress(TapPosition position) => _updateState('long press', position);
 
   void _updateState(String gesture, TapPosition position) {
-    _clickRollDice();
+    _logEvent('clickRollDice');
 
     setState(() {
       _gesture = gesture;
@@ -286,9 +305,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     });
   }
 
-  Future<void> _clickRollDice() async {
+  Future<void> _logEvent(name) async {
     await analytics.logEvent(
-      name: 'clickRollDice',
+      name: name,
       parameters: <String, dynamic>{
       },
     );
@@ -314,5 +333,4 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       },
     );
   }
-
 }
